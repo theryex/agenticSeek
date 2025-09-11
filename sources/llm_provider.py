@@ -1,6 +1,3 @@
-import os
-import platform
-import socket
 import subprocess
 import time
 from urllib.parse import urlparse
@@ -160,7 +157,11 @@ class Provider:
         Use local or remote Ollama server to generate text.
         """
         thought = ""
-        host = f"{self.internal_url}:11434" if self.is_local else f"http://{self.server_address}"
+        ollama_remote_url = os.getenv("OLLAMA_REMOTE_URL")
+        if ollama_remote_url:
+            host = ollama_remote_url
+        else:
+            host = f"{self.internal_url}:11434" if self.is_local else f"http://{self.server_address}"
         client = OllamaClient(host=host)
 
         try:
