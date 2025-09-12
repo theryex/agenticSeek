@@ -1,5 +1,6 @@
 import subprocess
 import time
+import os
 from urllib.parse import urlparse
 
 import httpx

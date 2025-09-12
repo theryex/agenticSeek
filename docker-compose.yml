@@ -63,9 +63,10 @@ services:
       - ./frontend/agentic-seek-front/src:/app/src:rw,z
       - ./screenshots:/app/screenshots
     environment:
+      - PORT=${FRONTEND_PORT:-3000}
       - NODE_ENV=development
       - CHOKIDAR_USEPOLLING=true
-      - REACT_APP_BACKEND_URL=http://localhost:7777
+      - REACT_APP_BACKEND_URL=${REACT_APP_BACKEND_URL:-http://localhost:7777}
     networks:
       - agentic-seek-net
 
