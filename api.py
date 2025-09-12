@@ -87,10 +87,12 @@ def initialize_system():
         
         headless = True
     
+    ollama_url = os.getenv("OLLAMA_URL", config["MAIN"]["provider_server_address"])
+
     provider = Provider(
         provider_name=config["MAIN"]["provider_name"],
         model=config["MAIN"]["provider_model"],
-        server_address=config["MAIN"]["provider_server_address"],
+        server_address=ollama_url,
         is_local=config.getboolean('MAIN', 'is_local')
     )
     logger.info(f"Provider initialized: {provider.provider_name} ({provider.model})")
@@ -291,9 +293,5 @@ if __name__ == "__main__":
     else:
         print("[AgenticSeek] Starting on host machine...")
     
-    envport = os.getenv("BACKEND_PORT")
-    if envport:
-        port = int(envport)
-    else:
-        port = 7777
-    uvicorn.run(api, host="0.0.0.0", port=7777)
+    port = int(os.getenv("BACKEND_PORT", "7777"))
+    uvicorn.run(api, host="0.0.0.0", port=port)

@@ -4,6 +4,7 @@ import sys
 import argparse
 import configparser
 import asyncio
+import os
 
 from sources.llm_provider import Provider
 from sources.interaction import Interaction
@@ -23,9 +24,11 @@ async def main():
     personality_folder = "jarvis" if config.getboolean('MAIN', 'jarvis_personality') else "base"
     languages = config["MAIN"]["languages"].split(' ')
 
+    ollama_url = os.getenv("OLLAMA_URL", config["MAIN"]["provider_server_address"])
+
     provider = Provider(provider_name=config["MAIN"]["provider_name"],
                         model=config["MAIN"]["provider_model"],
-                        server_address=config["MAIN"]["provider_server_address"],
+                        server_address=ollama_url,
                         is_local=config.getboolean('MAIN', 'is_local'))
 
     browser = Browser(
