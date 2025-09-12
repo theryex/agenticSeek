@@ -10,6 +10,12 @@ if [ -z "$WORK_DIR" ]; then
     exit 1
 fi
 
+if [ ! -d "$WORK_DIR" ]; then
+    echo "Error: WORK_DIR directory '$WORK_DIR' does not exist. Please create it first."
+    exit 1
+fi
+
+dir_size_bytes=0
 if [[ "$OSTYPE" == "darwin"* ]]; then
     dir_size_bytes=$(du -s -b "$WORK_DIR" 2>/dev/null | awk '{print $1}')
 else
@@ -127,13 +133,13 @@ if [ "$1" = "full" ]; then
     done
     if ! $COMPOSE_CMD --profile full up; then
         echo "Error: Failed to start containers. Check Docker logs with '$COMPOSE_CMD logs'."
-        echo "Possible fixes: Run with sudo or ensure port 8080 is free."
+        echo "Possible fixes: Run with sudo, ensure required ports are free, or check for container name conflicts."
         exit 1
     fi
 else
     if ! $COMPOSE_CMD --profile core up; then
         echo "Error: Failed to start containers. Check Docker logs with '$COMPOSE_CMD logs'."
-        echo "Possible fixes: Run with sudo or ensure port 8080 is free."
+        echo "Possible fixes: Run with sudo, ensure required ports are free, or check for container name conflicts."
         exit 1
     fi
 fi
