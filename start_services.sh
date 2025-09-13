@@ -144,3 +144,8 @@ else
     fi
 fi
 sleep 10
+
+echo "-----------------------------------------------------"
+echo "AgenticSeek is now running!"
+echo "You can access the frontend at: http://${APP_HOST:-localhost}:${FRONTEND_PORT:-3000}"
+echo "-----------------------------------------------------"
