@@ -158,12 +158,7 @@ class Provider:
         Use local or remote Ollama server to generate text.
         """
         thought = ""
-        ollama_remote_url = os.getenv("OLLAMA_REMOTE_URL")
-        if ollama_remote_url:
-            host = ollama_remote_url
-        else:
-            host = f"http://{self.server_address}"
-        client = OllamaClient(host=host)
+        client = OllamaClient(host=self.server_address)
 
         try:
             stream = client.chat(
