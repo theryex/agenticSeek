@@ -7,8 +7,9 @@ import { ResizableLayout } from "./components/ResizableLayout";
 import faviconPng from "./logo.png";
 
 let backendUrl = process.env.REACT_APP_BACKEND_URL;
-if (backendUrl && !/^https?:\/\//i.test(backendUrl)) {
-  backendUrl = 'http://' + backendUrl;
+if (backendUrl) {
+  // Remove any existing protocol and ensure it starts with http://
+  backendUrl = 'http://' + backendUrl.replace(/^https?:\/\//, '');
 }
 const BACKEND_URL = backendUrl;
 console.log("Using backend URL:", BACKEND_URL);
