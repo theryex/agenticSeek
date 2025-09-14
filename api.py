@@ -21,6 +21,8 @@ from sources.browser import Browser, create_driver
 from sources.utility import pretty_print
 from sources.logger import Logger
 from sources.schemas import QueryRequest, QueryResponse
+from ollama import Client as OllamaClient
+from httpx import ConnectError, ReadTimeout
 
 from dotenv import load_dotenv
 
@@ -88,6 +90,19 @@ def initialize_system():
         headless = True
     
     ollama_url = os.getenv("OLLAMA_URL", config["MAIN"]["provider_server_address"])
+
+    # Ollama health check
+    if config["MAIN"]["provider_name"] == "ollama":
+        print(f"Checking connection to Ollama at {ollama_url}...")
+        try:
+            client = OllamaClient(host=ollama_url)
+            client.list()
+            print("Ollama connection successful.")
+        except (ConnectError, ReadTimeout) as e:
+            print(f"Error: Could not connect to Ollama at {ollama_url}.")
+            print("Please ensure Ollama is running and the OLLAMA_URL in your .env file is correct.")
+            print(f"Details: {e}")
+            sys.exit(1)
 
     provider = Provider(
         provider_name=config["MAIN"]["provider_name"],
