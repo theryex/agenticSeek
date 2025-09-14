@@ -6,12 +6,7 @@ import { ThemeToggle } from "./components/ThemeToggle";
 import { ResizableLayout } from "./components/ResizableLayout";
 import faviconPng from "./logo.png";
 
-let backendUrl = process.env.REACT_APP_BACKEND_URL || '';
-// If it's not a relative path and doesn't have a protocol, add http://
-if (backendUrl && !backendUrl.startsWith('/') && !/^https?:\/\//i.test(backendUrl)) {
-  backendUrl = 'http://' + backendUrl;
-}
-const BACKEND_URL = backendUrl;
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 console.log("Using backend URL:", BACKEND_URL);
 
 function App() {
