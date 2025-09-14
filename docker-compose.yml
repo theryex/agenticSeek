@@ -24,6 +24,8 @@ services:
   searxng:
     container_name: searxng
     profiles: ["core", "full"]
+    env_file:
+      - .env
     image: docker.io/searxng/searxng:latest
     restart: unless-stopped
     ports:
@@ -52,6 +54,8 @@ services:
   frontend:
     container_name: frontend
     profiles: ["core", "full"]
+    env_file:
+      - .env
     build:
       context: ./frontend
       dockerfile: Dockerfile.frontend
@@ -71,6 +75,8 @@ services:
   backend:
     container_name: backend
     profiles: ["backend", "full"]
+    env_file:
+      - .env
     build:
       context: .
       dockerfile: Dockerfile.backend

@@ -6,7 +6,20 @@ import { ThemeToggle } from "./components/ThemeToggle";
 import { ResizableLayout } from "./components/ResizableLayout";
 import faviconPng from "./logo.png";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
+let backendUrl = process.env.REACT_APP_BACKEND_URL || '';
+// If it's a relative path, use it as is (for reverse proxy setups)
+if (backendUrl.startsWith('/')) {
+  // No change needed
+}
+// If it's a full URL, use it as is
+else if (/^https?:\/\//i.test(backendUrl)) {
+  // No change needed
+}
+// If it's a domain/IP without a protocol, prepend the current page's protocol
+else if (backendUrl) {
+  backendUrl = window.location.protocol + '//' + backendUrl;
+}
+const BACKEND_URL = backendUrl;
 console.log("Using backend URL:", BACKEND_URL);
 
 function App() {
