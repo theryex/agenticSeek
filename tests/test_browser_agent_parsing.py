@@ -7,6 +7,7 @@ from sources.agents.browser_agent import BrowserAgent
 class TestBrowserAgentParsing(unittest.TestCase):
     def setUp(self):
         # Initialize a basic BrowserAgent instance for testing
+        os.environ['SEARXNG_BASE_URL'] = "http://127.0.0.1:8080"
         self.agent = BrowserAgent(
             name="TestAgent",
             prompt_path="../prompts/base/browser_agent.txt",

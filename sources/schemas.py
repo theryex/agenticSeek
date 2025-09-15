@@ -3,6 +3,9 @@ from typing import Tuple, Callable
 from pydantic import BaseModel
 from sources.utility import pretty_print
 
+class ModelUpdateRequest(BaseModel):
+    model: str
+
 class QueryRequest(BaseModel):
     query: str
     tts_enabled: bool = True

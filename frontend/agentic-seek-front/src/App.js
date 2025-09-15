@@ -4,6 +4,7 @@ import axios from "axios";
 import "./App.css";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { ResizableLayout } from "./components/ResizableLayout";
+import { Login } from "./components/Login";
 import faviconPng from "./logo.png";
 
 let backendUrl = process.env.REACT_APP_BACKEND_URL || '';
@@ -33,10 +34,21 @@ function App() {
   const [status, setStatus] = useState("Agents ready");
   const [expandedReasoning, setExpandedReasoning] = useState(new Set());
   const messagesEndRef = useRef(null);
+  const [auth, setAuth] = useState(null);
+  const [models, setModels] = useState([]);
+  const [selectedModel, setSelectedModel] = useState("");
+
+  const handleLogin = (username, password) => {
+    setAuth({ username, password });
+  };
+
+  if (!auth) {
+    return <Login onLogin={handleLogin} />;
+  }
 
   const fetchLatestAnswer = useCallback(async () => {
     try {
-      const res = await axios.get(`${BACKEND_URL}/latest_answer`);
+      const res = await axios.get(`${BACKEND_URL}/latest_answer`, { auth });
       const data = res.data;
 
       updateData(data);
@@ -75,12 +87,42 @@ function App() {
       fetchLatestAnswer();
       fetchScreenshot();
     }, 3000);
+    fetchModels();
     return () => clearInterval(intervalId);
   }, [fetchLatestAnswer]);
 
+  const fetchModels = async () => {
+    try {
+      const res = await axios.get(`${BACKEND_URL}/models`, { auth });
+      setModels(res.data.models);
+      setSelectedModel(res.data.models[0].name);
+    } catch (error) {
+      console.error("Error fetching models:", error);
+    }
+  };
+
+  const handleModelChange = async (e) => {
+    const model = e.target.value;
+    setSelectedModel(model);
+    try {
+      await axios.post(`${BACKEND_URL}/update_model`, { model }, { auth });
+    } catch (error) {
+      console.error("Error updating model:", error);
+    }
+  };
+
+  const handleClearHistory = async () => {
+    try {
+      await axios.get(`${BACKEND_URL}/clear_history`, { auth });
+      setMessages([]);
+    } catch (error) {
+      console.error("Error clearing history:", error);
+    }
+  };
+
   const checkHealth = async () => {
     try {
-      await axios.get(`${BACKEND_URL}/health`);
+      await axios.get(`${BACKEND_URL}/health`, { auth });
       setIsOnline(true);
       console.log("System is online");
     } catch {
@@ -96,6 +138,7 @@ function App() {
         `${BACKEND_URL}/screenshots/updated_screen.png?timestamp=${timestamp}`,
         {
           responseType: "blob",
+          auth,
         }
       );
       console.log("Screenshot fetched successfully");
@@ -162,7 +205,7 @@ function App() {
     setIsLoading(false);
     setError(null);
     try {
-      await axios.get(`${BACKEND_URL}/stop`);
+      await axios.get(`${BACKEND_URL}/stop`, { auth });
       setStatus("Requesting stop...");
     } catch (err) {
       console.error("Error stopping the agent:", err);
@@ -183,10 +226,14 @@ function App() {
     try {
       console.log("Sending query:", query);
       setQuery("waiting for response...");
-      const res = await axios.post(`${BACKEND_URL}/query`, {
-        query,
-        tts_enabled: false,
-      });
+      const res = await axios.post(
+        `${BACKEND_URL}/query`,
+        {
+          query,
+          tts_enabled: false,
+        },
+        { auth }
+      );
       setQuery("Enter your query...");
       console.log("Response:", res.data);
       const data = res.data;
@@ -247,6 +294,24 @@ function App() {
             </svg>
             <span className="action-text">GitHub</span>
           </a>
+          <div>
+            <select
+              value={selectedModel}
+              onChange={handleModelChange}
+              className="action-button"
+            >
+              {models.map((model) => (
+                <option key={model.name} value={model.name}>
+                  {model.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <button onClick={handleClearHistory} className="action-button">
+              Clear History
+            </button>
+          </div>
           <div>
             <ThemeToggle />
           </div>

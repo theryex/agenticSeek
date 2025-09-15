@@ -10,7 +10,7 @@
     "axios": "^1.8.4",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "react-markdown": "^10.1.0",
+    "react-markdown": "8.0.7",
     "react-scripts": "5.0.1",
     "web-vitals": "^2.1.4"
   },
@@ -36,6 +36,11 @@
       "last 1 chrome version",
       "last 1 firefox version",
       "last 1 safari version"
+    ]
+  },
+  "jest": {
+    "transformIgnorePatterns": [
+      "node_modules/(?!axios|react-markdown)/"
     ]
   }
 }

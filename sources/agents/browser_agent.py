@@ -4,6 +4,7 @@ from datetime import date
 from typing import List, Tuple, Type, Dict
 from enum import Enum
 import asyncio
+import os
 
 from sources.utility import pretty_print, animate_thinking
 from sources.agents.agent import Agent
@@ -26,7 +27,7 @@ class BrowserAgent(Agent):
         """
         super().__init__(name, prompt_path, provider, verbose, browser)
         self.tools = {
-            "web_search": searxSearch(),
+            "web_search": searxSearch(os.getenv("SEARXNG_BASE_URL")),
         }
         self.role = "web"
         self.type = "browser_agent"

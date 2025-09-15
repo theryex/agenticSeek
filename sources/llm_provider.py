@@ -1,6 +1,8 @@
 import subprocess
 import time
 import os
+import socket
+import platform
 from urllib.parse import urlparse
 
 import httpx

@@ -39,6 +39,8 @@ class Tools():
         self.messages = []
         self.logger = Logger("tools.log")
         self.config = configparser.ConfigParser()
+        if self.config_exists():
+            self.config.read('./config.ini')
         self.work_dir = self.create_work_dir()
         self.excutable_blocks_found = False
         self.safe_mode = False
@@ -51,14 +53,20 @@ class Tools():
         self.allow_language_exec_bash = value 
 
     def safe_get_work_dir_path(self):
-        path = None
-        path = os.getenv('WORK_DIR', path)
-        if path is None or path == "":
-            path = self.config['MAIN']['work_dir'] if 'MAIN' in self.config and 'work_dir' in self.config['MAIN'] else None
-        if path is None or path == "":
-            print("No work directory specified, using default.")
-            path = self.create_work_dir()
-        return path
+        path = os.getenv('WORK_DIR')
+        if path:
+            return path
+
+        if 'MAIN' in self.config and 'work_dir' in self.config['MAIN']:
+            path = self.config['MAIN']['work_dir']
+            if path:
+                return path
+
+        # If not specified, use a default directory
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        default_path = os.path.join(project_root, 'work_dir')
+        print(f"No work directory specified, using default: {default_path}")
+        return default_path
     
     def config_exists(self):
         """Check if the config file exists."""
@@ -66,12 +74,10 @@ class Tools():
 
     def create_work_dir(self):
         """Create the work directory if it does not exist."""
-        default_path = os.path.dirname(os.getcwd())
-        if self.config_exists():
-            self.config.read('./config.ini')
-            workdir_path = self.safe_get_work_dir_path()
-        else:
-            workdir_path = default_path
+        workdir_path = self.safe_get_work_dir_path()
+        if not os.path.exists(workdir_path):
+            self.logger.info(f"Creating directory {workdir_path}")
+            os.makedirs(workdir_path)
         return workdir_path
 
     @abstractmethod

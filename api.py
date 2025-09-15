@@ -7,7 +7,9 @@ import configparser
 import asyncio
 import time
 from typing import List
-from fastapi import FastAPI
+import secrets
+from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.responses import JSONResponse
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,7 +22,7 @@ from sources.agents import CasualAgent, CoderAgent, FileAgent, PlannerAgent, Bro
 from sources.browser import Browser, create_driver
 from sources.utility import pretty_print
 from sources.logger import Logger
-from sources.schemas import QueryRequest, QueryResponse
+from sources.schemas import QueryRequest, QueryResponse, ModelUpdateRequest
 from ollama import Client as OllamaClient
 from httpx import ConnectError, ReadTimeout
 
@@ -53,6 +55,19 @@ celery_app.conf.update(task_track_started=True)
 logger = Logger("backend.log")
 config = configparser.ConfigParser()
 config.read('config.ini')
+
+security = HTTPBasic()
+
+def get_current_username(credentials: HTTPBasicCredentials = Depends(security)):
+    correct_username = secrets.compare_digest(credentials.username, config["AUTH"]["username"])
+    correct_password = secrets.compare_digest(credentials.password, config["AUTH"]["password"])
+    if not (correct_username and correct_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+    return credentials.username
 
 api.add_middleware(
     CORSMiddleware,
@@ -161,8 +176,12 @@ interaction = initialize_system()
 is_generating = False
 query_resp_history = []
 
+@api.post("/login")
+async def login(username: str = Depends(get_current_username)):
+    return {"username": username}
+
 @api.get("/screenshot")
-async def get_screenshot():
+async def get_screenshot(username: str = Depends(get_current_username)):
     logger.info("Screenshot endpoint called")
     screenshot_path = ".screenshots/updated_screen.png"
     if os.path.exists(screenshot_path):
@@ -178,19 +197,53 @@ async def health_check():
     logger.info("Health check endpoint called")
     return {"status": "healthy", "version": "0.1.0"}
 
+@api.get("/models")
+async def get_models():
+    logger.info("Get models endpoint called")
+    try:
+        ollama_url = os.getenv("OLLAMA_URL", config["MAIN"]["provider_server_address"])
+        client = OllamaClient(host=ollama_url)
+        models = client.list()
+        return JSONResponse(status_code=200, content=models)
+    except Exception as e:
+        logger.error(f"Error getting models: {str(e)}")
+        return JSONResponse(status_code=500, content={"error": "Could not retrieve models"})
+
+@api.post("/update_model")
+async def update_model(request: ModelUpdateRequest):
+    logger.info(f"Update model endpoint called with model: {request.model}")
+    try:
+        interaction.provider.model = request.model
+        for agent in interaction.agents:
+            agent.provider.model = request.model
+        logger.info(f"Model updated to: {request.model}")
+        return JSONResponse(status_code=200, content={"status": "updated"})
+    except Exception as e:
+        logger.error(f"Error updating model: {str(e)}")
+        return JSONResponse(status_code=500, content={"error": "Could not update model"})
+
 @api.get("/is_active")
-async def is_active():
+async def is_active(username: str = Depends(get_current_username)):
     logger.info("Is active endpoint called")
     return {"is_active": interaction.is_active}
 
 @api.get("/stop")
-async def stop():
+async def stop(username: str = Depends(get_current_username)):
     logger.info("Stop endpoint called")
     interaction.current_agent.request_stop()
     return JSONResponse(status_code=200, content={"status": "stopped"})
 
+@api.get("/clear_history")
+async def clear_history(username: str = Depends(get_current_username)):
+    global interaction, query_resp_history
+    logger.info("Clear history endpoint called")
+    interaction = initialize_system()
+    query_resp_history = []
+    logger.info("Chat history cleared")
+    return JSONResponse(status_code=200, content={"status": "cleared"})
+
 @api.get("/latest_answer")
-async def get_latest_answer():
+async def get_latest_answer(username: str = Depends(get_current_username)):
     global query_resp_history
     if interaction.current_agent is None:
         return JSONResponse(status_code=404, content={"error": "No agent available"})
@@ -236,7 +289,7 @@ async def think_wrapper(interaction, query):
         raise e
 
 @api.post("/query", response_model=QueryResponse)
-async def process_query(request: QueryRequest):
+async def process_query(request: QueryRequest, username: str = Depends(get_current_username)):
     global is_generating, query_resp_history
     logger.info(f"Processing query: {request.query}")
     query_resp = QueryResponse(

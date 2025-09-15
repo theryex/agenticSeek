@@ -31,9 +31,7 @@ class Memory():
         self.session_id = str(uuid.uuid4())
         self.conversation_folder = f"conversations/"
         self.session_recovered = False
-        if recover_last_session:
-            self.load_memory()
-            self.session_recovered = True
+
         # memory compression system
         self.model = None
         self.tokenizer = None
@@ -42,6 +40,10 @@ class Memory():
         self.model_provider = model_provider
         if self.memory_compression:
             self.download_model()
+
+        if recover_last_session:
+            self.load_memory()
+            self.session_recovered = True
 
     def get_ideal_ctx(self, model_name: str) -> int | None:
         """
@@ -236,6 +238,8 @@ class Memory():
         """
         Compress (summarize) the memory using the model.
         """
+        if not self.memory_compression:
+            return
         if self.tokenizer is None or self.model is None:
             self.logger.warning("No tokenizer or model to perform memory compression.")
             return
